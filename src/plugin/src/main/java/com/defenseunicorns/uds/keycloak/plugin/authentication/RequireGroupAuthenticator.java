@@ -22,6 +22,7 @@ public class RequireGroupAuthenticator implements Authenticator {
 
     private static final Logger LOGGER = Logger.getLogger(RequireGroupAuthenticator.class.getName());
 
+    //fixme - this is TAC!
     public static final String TOC_USER_ATTRIBUTE = "uds.toc.session.id";
 
     @Override

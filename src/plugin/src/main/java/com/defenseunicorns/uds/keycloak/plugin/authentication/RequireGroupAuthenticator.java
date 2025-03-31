@@ -11,11 +11,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
-import org.keycloak.models.ClientModel;
-import org.keycloak.models.GroupModel;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.RealmModel;
-import org.keycloak.models.UserModel;
+import org.keycloak.models.*;
 import com.defenseunicorns.uds.keycloak.plugin.Common;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -25,6 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class RequireGroupAuthenticator implements Authenticator {
 
     private static final Logger LOGGER = Logger.getLogger(RequireGroupAuthenticator.class.getName());
+
+    public static final String TOC_USER_ATTRIBUTE = "uds.toc.session.id";
 
     @Override
     public void authenticate(final AuthenticationFlowContext context) {
@@ -122,7 +120,39 @@ public class RequireGroupAuthenticator implements Authenticator {
     }
 
     private void success(final AuthenticationFlowContext context, final UserModel user) {
-        user.addRequiredAction("TERMS_AND_CONDITIONS");
+        boolean shouldAddTOC = true;
+        AuthenticatorConfigModel authConfig = context.getAuthenticatorConfig();
+        if (authConfig != null && authConfig.getConfig() != null) {
+            String tocPerSession = authConfig.getConfig().get(RequireGroupAuthenticatorFactory.TOC_PER_SESSION_CONFIG_NAME);
+            LOGGER.debugf("No AuthenticatorConfig is configured, TOC per session: %s", tocPerSession);
+
+            if (Boolean.valueOf(tocPerSession)) {
+                String parentSessionId = context.getAuthenticationSession().getParentSession().getId();
+                LOGGER.debugf("TOC per session, Parent Session ID: %s", parentSessionId);
+
+                String userSessionId = null;
+                if (user.getAttributes().get(TOC_USER_ATTRIBUTE) != null) {
+                    userSessionId = user.getAttributes().get(TOC_USER_ATTRIBUTE).get(0);
+                    if (parentSessionId.equals(userSessionId)) {
+                        shouldAddTOC = false;
+                        LOGGER.debugf("User already has TOC for this session, skipping TOC");
+                    } else {
+                        LOGGER.debugf("Stale login detected, adding TOC");
+                    }
+                } else {
+                  LOGGER.debugf("User doesn't have %s attribute set", TOC_USER_ATTRIBUTE);
+                }
+                if (shouldAddTOC) {
+                    user.setAttribute(TOC_USER_ATTRIBUTE, Arrays.asList(parentSessionId));
+                }
+            }
+        } else {
+            LOGGER.warn("No AuthenticatorConfig is configured");
+        }
+
+        if (shouldAddTOC) {
+            user.addRequiredAction("TERMS_AND_CONDITIONS");
+        }
         context.success();
     }
 

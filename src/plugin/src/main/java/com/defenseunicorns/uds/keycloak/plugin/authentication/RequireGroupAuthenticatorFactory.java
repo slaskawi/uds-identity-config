@@ -6,6 +6,8 @@
 package com.defenseunicorns.uds.keycloak.plugin.authentication;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.keycloak.Config;
@@ -16,16 +18,34 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 
+import static org.keycloak.provider.ProviderConfigProperty.STRING_TYPE;
+
 public class RequireGroupAuthenticatorFactory implements AuthenticatorFactory {
 
     /**
      * provider id variable.
      */
     public static final String PROVIDER_ID = "uds-group-restriction";
+
     /**
      * group authenticator variable.
      */
     public static final RequireGroupAuthenticator GROUP_AUTHENTICATOR = new RequireGroupAuthenticator();
+
+    public static final String TOC_PER_SESSION_CONFIG_NAME = "toc-per-session";
+
+    protected static final List<ProviderConfigProperty> configProperties;
+
+    static {
+        ProviderConfigProperty tocPerSession = new ProviderConfigProperty();
+        tocPerSession.setType(ProviderConfigProperty.BOOLEAN_TYPE);
+        tocPerSession.setName(TOC_PER_SESSION_CONFIG_NAME);
+        tocPerSession.setLabel("Display TOC per session");
+        tocPerSession.setDefaultValue(Boolean.toString(true));
+        tocPerSession.setHelpText("Setting this to true will display the TOC only once per session across multiple devices and tabs. Setting this to false will prompt TOC on every login.");
+        configProperties = Arrays.asList(tocPerSession);
+    }
+
     /**
      * requirement choices variable.
      */
@@ -64,60 +84,39 @@ public class RequireGroupAuthenticatorFactory implements AuthenticatorFactory {
         // no implementation needed here
     }
 
-    /**
-     * This implementation is not intended to be overridden.
-     */
     @Override
     public String getDisplayType() {
         return "UDS Operator Group Authentication Validation";
     }
 
-    /**
-     * This implementation is not intended to be overridden.
-     */
     @Override
     public String getReferenceCategory() {
         return null;
     }
 
-    /**
-     * This implementation is not intended to be overridden.
-     */
     @Override
     public boolean isConfigurable() {
-        return false;
+        return true;
     }
 
-    /**
-     * This implementation is not intended to be overridden.
-     */
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
         return REQUIREMENT_CHOICES;
     }
 
-    /**
-     * This implementation is not intended to be overridden.
-     */
     @Override
     public boolean isUserSetupAllowed() {
-        return false;
+        return true;
     }
 
-    /**
-     * This implementation is not intended to be overridden.
-     */
     @Override
     public String getHelpText() {
         return null;
     }
 
-    /**
-     * This implementation is not intended to be overridden.
-     */
     @Override
     public List<ProviderConfigProperty> getConfigProperties() {
-        // no implementation needed here. Just return empty collection
-        return new ArrayList<>();
+        return configProperties;
     }
+
 }

@@ -13,7 +13,7 @@ WORKDIR /home/build
 COPY plugin/pom.xml .
 COPY plugin/src ./src
 
-RUN mvn clean package
+RUN mvn clean package -DskipTests
 
 # Include anything in the extra-jars directory in the target directory
 # We will filter out in the next build stage

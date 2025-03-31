@@ -148,6 +148,7 @@ public class RequireGroupAuthenticator implements Authenticator {
             }
         } else {
             LOGGER.warn("No AuthenticatorConfig is configured");
+            //use the authenticator here - no configuration means turned on by default.
         }
 
         if (shouldAddTOC) {
